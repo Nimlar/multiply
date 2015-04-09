@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+
+    <title>snap svg</title>
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+<style type="text/css">
+            html, body {
+                height: 100%;
+            }
+            #main  {
+		display: flex;
+                height: 100%;
+		font-size: xx-large;
+            }
+
+	#resultat {
+	margin : auto;
+	}
+	#timer {
+margin-left: auto; 
+margin-top: auto;
+	}
+        </style>
+  </head>
+  <body >
+    <div id="main">
+	<div id="multiplication">
+ 	<span id="table"></span> &times; <span id="multiplicateur"></span>
+        </div>
+	<div id="resultat">
+        </div>
+	<div id="timer">
+        </div>
+    </div>
+    </div>
+    <script>
+var tables;
+var nb_err= 0;
+
+/* from http://stackoverflow.com/questions/2450954/how-to-randomize-shuffle-a-javascript-array */
+function shuffle(array) {
+  var currentIndex = array.length, temporaryValue, randomIndex ;
+
+  // While there remain elements to shuffle...
+  while (0 !== currentIndex) {
+
+    // Pick a remaining element...
+    randomIndex = Math.floor(Math.random() * currentIndex);
+    currentIndex -= 1;
+
+    // And swap it with the current element.
+    temporaryValue = array[currentIndex];
+    array[currentIndex] = array[randomIndex];
+    array[randomIndex] = temporaryValue;
+  }
+
+  return array;
+}
+
+var intTimer;
+var endTimer;
+function start_timer()
+{
+	endTime=Date.now() + urlParams["time"]*1000 ;
+	$("#timer").html(endTime - Date.now());
+	endTimer = window.setTimeout(function() {
+		check_result();
+	}, urlParams["time"]*1000)		
+	intTimer = window.setInterval(function() {
+		$("#timer").html(endTime - Date.now());
+	}, 100);
+}
+function stop_timer()
+{
+	window.clearTimeout(endTimer);
+	window.clearInterval(intTimer);
+}
+function initialize(table)
+{ 
+	var calculs=[];
+        for(i=1 ; i<=10 ; i++) {
+		calculs.push([i,table]);
+	} 
+	shuffle(calculs);
+	return calculs;
+}
+
+function calculate() 
+{
+	var cur = tables.pop();
+	if (cur === undefined ) {
+		alert( "nombre d'erreur = " + nb_err);
+		return;
+	}
+	print(cur);
+}
+
+/* expected a [a,b], display a * b */
+function print(calc)
+{
+	$("#table").html(calc[0]);
+	$("#multiplicateur").html(calc[1]);
+	start_timer();
+}
+
+function message(str)
+{
+	console.log(str);
+}
+
+function check_result()
+{
+	var a,b,r;
+
+	stop_timer();
+
+	a = $("#table").html();
+	b = $("#multiplicateur").html();
+	r = $("#resultat").html();
+
+	if( +r === +a * +b ) { 
+		message("correct"); 
+	} else {
+		message("faux");
+		nb_err++; 
+		tables.unshift([+a,+b]);	
+	}
+	$("#resultat").html("");
+	calculate();
+}
+function manage_key(ev)
+{
+	var key = ev.charCode;
+	if ((key == 13) || (key == 10))  {
+		check_result();
+	} else if (key == ' '.charCodeAt()) {
+		$("#resultat").html("");
+	} else {
+		/* check input, it should be a number */
+		if ((key >= '0'.charCodeAt()) && (key <= '9'.charCodeAt() ) ) {
+			var newChar = String.fromCharCode(key);
+			var data = $("#resultat").html();
+			$("#resultat").html(data + newChar );
+		}
+	}
+	return false ;
+}
+$(document).keypress(manage_key);
+
+//$(window).setInterval(function () {} , 100);
+
+var urlParams={ table : 7, time : 10} ;
+(window.onpopstate = function () {
+    var match,
+        pl     = /\+/g,  // Regex for replacing addition symbol with a space
+        search = /([^&=]+)=?([^&]*)/g,
+        decode = function (s) { return decodeURIComponent(s.replace(pl, " ")); },
+        query  = window.location.search.substring(1);
+
+    while (match = search.exec(query))
+       urlParams[decode(match[1])] = decode(match[2]);
+
+})();
+
+tables = initialize(urlParams["table"]);
+calculate();
+
+
+    </script>
+</body>
+</html>
